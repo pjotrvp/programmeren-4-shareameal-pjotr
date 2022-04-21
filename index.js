@@ -65,21 +65,42 @@ app.put("/api/user/:userId", (req, res) => {
   const userId = req.params.userId;
   console.log(`User met ID ${userId} gezocht`);
   let user = database.filter((item) => item.id == userId);
-  //user ophalen
   if (user.length > 0) {
-    console.log("Before update: ", user);
-    database[userId].user = req.body
+      let user2 = req.body;
+    const targetIndex = database.findIndex(f=>f.id == userId)
+    database[targetIndex] = user = {
+                            userId,
+                            ...user2,
+                          };
+    console.log(user);
     res.status(200).json({
       status: 200,
       result: user,
     });
-    
-  //als user niet bestaat 401 status.
   } else {
     res.status(401).json({
       status: 401,
       result: `user with ID ${userId} not found`,
     });
+  }
+})
+
+app.delete("/api/user/:userId", (req, res) => {
+  const userId = req.params.userId;
+  console.log(`User met ID ${userId} gezocht`)
+  let user = database.filter((item) => item.id == userId)
+  if(user.length > 0){
+    const targetIndex = database.findIndex(f=>f.id == userId)
+    delete database[userId]
+    res.status(200).json({
+      status: 200,
+      result: "ID deleted"
+    })
+  } else {
+    res.status(401).json({
+      status: 401,
+      result: `user with ID ${userId} not found`,
+    })
   }
 })
 
