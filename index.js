@@ -5,6 +5,28 @@ const port = process.env.PORT || 3000;
 const bodyParser = require("body-parser");
 app.use(bodyParser.json());
 
+const FORBIDDEN_TERMINAL_CHARACTERS = [
+  `!`,
+  `#`,
+  `$`,
+  `%`,
+  `&`,
+  `'`,
+  `*`,
+  `+`,
+  `-`,
+  `/`,
+  `=`,
+  `?`,
+  `^`,
+  `_`,
+  "`",
+  `{`,
+  `|`,
+  `}`,
+  `~`,
+];
+
 let database = [];
 let id = 0;
 
@@ -23,17 +45,26 @@ app.get("/", (req, res) => {
 
 app.post("/api/user", (req, res) => {
   let user = req.body;
-  id++;
-  user = {
-    id,
-    ...user,
-  };
+  let existingUsers = database.filter((item) => item.email == user.email);
+  if (emailIsValid(user.email) && !existingUsers.length > 0) {
+    id++;
+    user = {
+      id,
+      ...user,
+    };
   console.log(user);
   database.push(user);
   res.status(201).json({
     status: 201,
     result: database,
   });
+  }
+  else{
+    res.status(401).json({
+      status: 401,
+      result: `Email address ${user.email} is not valid or already exists`,
+    });
+  }
 });
 
 app.get("/api/user/:userId", (req, res, next) => {
@@ -64,8 +95,8 @@ app.get("/api/user", (req, res, next) => {
 app.put("/api/user/:userId", (req, res) => {
   const userId = req.params.userId;
   console.log(`User met ID ${userId} gezocht`);
-  let user = database.filter((item) => item.id == userId);
-  if (user.length > 0) {
+  let user = database.filter((item) => item.email == user.mail);
+  if (emailIsValid(user.email)) {
       let user2 = req.body;
     const targetIndex = database.findIndex(f=>f.id == userId)
     database[targetIndex] = user = {
@@ -103,6 +134,18 @@ app.delete("/api/user/:userId", (req, res) => {
     })
   }
 })
+
+let emailIsValid = (email) => {
+  let syntaxGood = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  if (!syntaxGood) return false;
+  for (let badChar of FORBIDDEN_TERMINAL_CHARACTERS) {
+    if (email.startsWith(badChar) || email.endsWith(badChar)) {
+      return false;
+    }
+  }
+  return true;
+};
+
 
 app.all("*", (req, res) => {
   res.status(401).json({
