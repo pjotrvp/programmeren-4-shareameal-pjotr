@@ -4,6 +4,7 @@ const app = express();
 const port = process.env.PORT || 3000;
 const userRouter = require('./src/routes/user.routes')
 const bodyParser = require("body-parser");
+const res = require("express/lib/response");
 app.use(bodyParser.json());
 
 let database = [];
@@ -17,6 +18,9 @@ app.all("*", (req, res, next) => {
   next();
 });
 
+app.use((err,req,res,next)=>{
+  res.status(err.status).json(err)
+})
 app.all("*", (req, res) => {
   res.status(401).json({
     status: 401,
