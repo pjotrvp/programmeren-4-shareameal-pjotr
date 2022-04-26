@@ -6,27 +6,6 @@ const userController = require('../controllers/user.controller')
 const bodyParser = require("body-parser");
 app.use(bodyParser.json());
 
-const FORBIDDEN_TERMINAL_CHARACTERS = [
-    `!`,
-    `#`,
-    `$`,
-    `%`,
-    `&`,
-    `'`,
-    `*`,
-    `+`,
-    `-`,
-    `/`,
-    `=`,
-    `?`,
-    `^`,
-    `_`,
-    "`",
-    `{`,
-    `|`,
-    `}`,
-    `~`,
-  ];
 
 
 router.get("/", (req, res) => {
@@ -36,7 +15,7 @@ router.get("/", (req, res) => {
     });
   });
   
-  router.post("/api/user", userController.addUser)
+  router.post("/api/user", userController.validateUser,  userController.addUser)
   
   router.get("/api/user/:userId", userController.getUser)
   
