@@ -4,11 +4,7 @@ const app = express();
 const port = process.env.PORT || 3000;
 const userRouter = require('./src/routes/user.routes')
 const bodyParser = require("body-parser");
-const res = require("express/lib/response");
 app.use(bodyParser.json());
-
-let database = [];
-let id = 0;
 
 app.use("/api", userRouter)
 
@@ -31,3 +27,5 @@ app.all("*", (req, res) => {
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
 });
+
+module.exports = app

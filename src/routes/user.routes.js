@@ -15,15 +15,15 @@ router.get("/", (req, res) => {
     });
   });
   
-  router.post("/api/user", userController.validateUser,  userController.addUser)
+  router.post("/user", userController.validateUser,  userController.addUser)
   
-  router.get("/api/user/:userId", userController.getUser)
+  router.get("/user/:userId", userController.getUser)
   
-  router.get("/api/user", userController.getAllUser);
+  router.get("/user", userController.getAllUser);
   
-  router.put("/api/user/:userId", userController.putUser)
+  router.put("/user/:userId", userController.putUser)
   
-  router.delete("/api/user/:userId", userController.deleteUser)
+  router.delete("/user/:userId", userController.deleteUser)
   
 
 
