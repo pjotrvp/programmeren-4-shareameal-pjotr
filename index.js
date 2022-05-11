@@ -1,9 +1,9 @@
-
 const express = require("express");
-const app = express();
-const port = process.env.PORT || 3000;
 const userRouter = require('./src/routes/user.routes')
 const bodyParser = require("body-parser");
+require("dotenv").config()
+const app = express();
+const port = process.env.PORT
 app.use(bodyParser.json());
 
 app.use("/api", userRouter)
@@ -25,7 +25,7 @@ app.all("*", (req, res) => {
 });
 
 app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`);
+  console.log(`ShareAMeal app listening on port ${port}`);
 });
 
 module.exports = app
