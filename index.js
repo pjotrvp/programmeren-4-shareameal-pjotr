@@ -1,12 +1,13 @@
 const express = require("express");
-const userRouter = require('./src/routes/user.routes')
-const bodyParser = require("body-parser");
-require("dotenv").config()
-const app = express();
-const port = process.env.PORT
-app.use(bodyParser.json());
+const authRoutes = require("./src/routes/authentication.routes");
+const userRouter = require("./src/routes/user.routes");
+const dbconnection = require("./database/dbConnection");
+const logger = require("./src/config/config").logger;
+require("dotenv").config();
 
-app.use("/api", userRouter)
+const app = express();
+const port = process.env.PORT;
+app.use(express.json());
 
 app.all("*", (req, res, next) => {
   const method = req.method;
@@ -14,9 +15,9 @@ app.all("*", (req, res, next) => {
   next();
 });
 
-app.use((err,req,res,next)=>{
-  res.status(err.status).json(err)
-})
+app.use("/api", userRouter);
+app.use("/api", authRoutes);
+
 app.all("*", (req, res) => {
   res.status(401).json({
     status: 401,
@@ -24,8 +25,26 @@ app.all("*", (req, res) => {
   });
 });
 
-app.listen(port, () => {
-  console.log(`ShareAMeal app listening on port ${port}`);
+app.use((err, req, res, next) => {
+  logger.debug("Error handler called.");
+  res.status(500).json({
+    statusCode: 500,
+    message: err.toString(),
+  });
 });
 
-module.exports = app
+app.listen(port, () => {
+  logger.debug(`Example app listening on port ${port}`);
+});
+
+process.on("SIGINT", () => {
+  logger.debug("SIGINT signal received: closing HTTP server");
+  dbconnection.end((err) => {
+    logger.debug("Database connection closed");
+  });
+  app.close(() => {
+    logger.debug("HTTP server closed");
+  });
+});
+
+module.exports = app;
