@@ -44,43 +44,46 @@ let controller = {
   },
   addUser: (req, res) => {
     let user = req.body;
-    let existingUsers = database.filter((item) => item.email == user.email);
-    if (emailIsValid(user.email) && !existingUsers.length > 0) {
-      id++;
-      user = {
-        id,
-        ...user,
-      };
-      console.log(user);
-      database.push(user);
-      res.status(201).json({
-        status: 201,
-        result: database,
-      });
-    } else {
-      res.status(401).json({
-        status: 401,
-        result: `Email address ${user.email} is not valid or already exists`,
-      });
-    }
+    const firstName = req.params.firstName;
+    const lastName = req.params.lastName;
+    const emailAdress = req.params.emailAdress;
+    const password = req.params.password;
+    const street = req.params.street;
+    const city = req.params.city;
+    dbConnection.getConnection(function (err, connection) {
+      if (err) throw err;
+      connection.query(
+        `INSERT INTO user (firstName, lastName, emailAdress, password, street, city) VALUES
+        (${firstName}, ${lastName}, ${password}, ${street}, ${city})`,
+        function (error, results, fields) {
+          connection.release();
+          if (error) throw error;
+          console.log("user: ", results);
+          res.status(200).json({
+            status: 200,
+            result: results,
+          });
+        }
+      );
+    });
   },
   getUser: (req, res, next) => {
     const userId = req.params.userId;
-    console.log(`User met ID ${userId} gezocht`);
-    let user = database.filter((item) => item.id == userId);
-    if (user.length > 0) {
-      console.log(user);
-      res.status(200).json({
-        status: 200,
-        result: user,
-      });
-    } else {
-      const error = {
-        status: 401,
-        result: `user with email ${userId} niet gevonden`,
-      };
-      next(error);
-    }
+    dbConnection.getConnection(function (err, connection) {
+      if (err) throw err;
+      connection.query(
+        `SELECT * FROM user WHERE ${userId} = user.id `,
+        function (error, results, fields) {
+          connection.release();
+          if (error) throw error;
+          console.log("user: ", results);
+          res.status(200).json({
+            status: 200,
+            result: results,
+          });
+        }
+      );
+    });
   },
   getUserById: (req, res) => {
     const userId = req.params.userId;
@@ -116,44 +119,47 @@ let controller = {
   },
   putUser: (req, res) => {
     const userId = req.params.userId;
+    const user = req.body;
     console.log(`User met ID ${userId} gezocht`);
-    let user = database.filter((item) => item.email == user.mail);
-    if (emailIsValid(user.email)) {
-      let user2 = req.body;
-      const targetIndex = database.findIndex((f) => f.id == userId);
-      database[targetIndex] = user = {
-        userId,
-        ...user2,
-      };
-      console.log(user);
-      res.status(200).json({
-        status: 200,
-        result: user,
-      });
-    } else {
-      res.status(401).json({
-        status: 401,
-        result: `user with ID ${userId} not found`,
-      });
-    }
+    dbConnection.getConnection(function (err, connection) {
+      if (err) throw err;
+      connection.query(
+        `UPDATE user SET ? WHERE id = ${userId}`,
+        function (error, results, fields) {
+          connection.release();
+          if (emailIsValid) {
+            console.log("user: ", results);
+            res.status(200).json({
+              status: 200,
+              result: "user updated",
+            });
+          } else {
+            res.status(401).json({
+              status: 401,
+              result: `email not valid`,
+            });
+          }
+        }
+      );
+    });
   },
   deleteUser: (req, res) => {
     const userId = req.params.userId;
-    console.log(`User met ID ${userId} gezocht`);
-    let user = database.filter((item) => item.id == userId);
-    if (user.length > 0) {
-      const targetIndex = database.findIndex((f) => f.id == userId);
-      delete database[userId];
-      res.status(200).json({
-        status: 200,
-        result: "ID deleted",
-      });
-    } else {
-      res.status(401).json({
-        status: 401,
-        result: `user with ID ${userId} not found`,
-      });
-    }
+    dbConnection.getConnection(function (err, connection) {
+      if (err) throw err;
+      connection.query(
+        `DELETE * FROM user WHERE ${userId} = user.id `,
+        function (error, results, fields) {
+          connection.release();
+          if (error) throw error;
+          console.log("user: ", results);
+          res.status(200).json({
+            status: 200,
+            result: results,
+          });
+        }
+      );
+    });
   },
 };
 let emailIsValid = (email) => {
