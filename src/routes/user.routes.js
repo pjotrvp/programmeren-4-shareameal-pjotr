@@ -3,9 +3,6 @@ const router = express.Router();
 const authController = require("../controllers/authentication.controller");
 const userController = require("../controllers/user.controller");
 
-const bodyParser = require("body-parser");
-app.use(bodyParser.json());
-
 router.get("/", (req, res) => {
   res.status(200).json({
     status: 200,
