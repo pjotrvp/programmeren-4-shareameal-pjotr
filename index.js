@@ -2,7 +2,7 @@ const express = require("express");
 const authRoutes = require("./src/routes/authentication.routes");
 const userRouter = require("./src/routes/user.routes");
 const dbconnection = require("./database/dbConnection");
-const logger = require("./src/config/config").logger;
+const logger = require("./config/config").logger;
 require("dotenv").config();
 
 const app = express();

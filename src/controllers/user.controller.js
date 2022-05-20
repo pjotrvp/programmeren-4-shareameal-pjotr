@@ -50,14 +50,15 @@ let controller = {
     const password = req.params.password;
     const street = req.params.street;
     const city = req.params.city;
+    const isActive = req.params.isActive;
     dbConnection.getConnection(function (err, connection) {
       if (err) throw err;
       connection.query(
-        `INSERT INTO user (firstName, lastName, emailAdress, password, street, city) VALUES
-        (${firstName}, ${lastName}, ${password}, ${street}, ${city})`,
+        `INSERT INTO user (firstName, lastName, emailAdress, password, street, city, isActive) VALUES
+        (${firstName}, ${lastName}, ${password}, ${street}, ${city}, ${isActive})`,
         function (error, results, fields) {
           connection.release();
-          if (error) throw error;
+          if (error) next(error);
           console.log("user: ", results);
           res.status(200).json({
             status: 200,
@@ -75,7 +76,7 @@ let controller = {
         `SELECT * FROM user WHERE ${userId} = user.id `,
         function (error, results, fields) {
           connection.release();
-          if (error) throw error;
+          if (error) next(error);
           console.log("user: ", results);
           res.status(200).json({
             status: 200,
@@ -93,7 +94,7 @@ let controller = {
         `SELECT * FROM user WHERE ${userId} = user.id `,
         function (error, results, fields) {
           connection.release();
-          if (error) throw error;
+          if (error) next(error);
           console.log("user: ", results);
           res.status(200).json({
             status: 200,
@@ -104,17 +105,36 @@ let controller = {
     });
   },
   getAllUser: (req, res) => {
+    let { name, isActive } = req.query;
+    let queryString = "SELECT `id`, `firstName` FROM `user`";
+    if (name || isActive) {
+      queryString += " WHERE ";
+      if (name) {
+        queryString += "`firstName` LIKE ?";
+        name = "%" + name + "%";
+      }
+      if (name && isActive) queryString += " AND ";
+      if (isActive) {
+        queryString += "`isActive` = ?";
+      }
+    }
+    queryString += ";";
+
     dbConnection.getConnection(function (err, connection) {
       if (err) throw err;
-      connection.query("SELECT * FROM user", function (error, results, fields) {
-        connection.release();
-        if (error) throw error;
-        console.log("# of users: ", results.length);
-        res.status(200).json({
-          status: 200,
-          result: results,
-        });
-      });
+      connection.query(
+        queryString,
+        [name, isActive],
+        function (error, results, fields) {
+          connection.release();
+          if (error) next(error);
+          console.log("# of users: ", results.length);
+          res.status(200).json({
+            status: 200,
+            result: results,
+          });
+        }
+      );
     });
   },
   putUser: (req, res) => {
@@ -127,16 +147,23 @@ let controller = {
         `UPDATE user SET ? WHERE id = ${userId}`,
         function (error, results, fields) {
           connection.release();
-          if (emailIsValid) {
-            console.log("user: ", results);
-            res.status(200).json({
-              status: 200,
-              result: "user updated",
-            });
+          if (results.affectedRows > 0) {
+            if (emailIsValid) {
+              console.log("user: ", results);
+              res.status(200).json({
+                status: 200,
+                result: "user updated",
+              });
+            } else {
+              res.status(401).json({
+                status: 401,
+                result: `email not valid`,
+              });
+            }
           } else {
-            res.status(401).json({
-              status: 401,
-              result: `email not valid`,
+            res.status(404).json({
+              status: 404,
+              result: "user not found",
             });
           }
         }
@@ -151,7 +178,7 @@ let controller = {
         `DELETE * FROM user WHERE ${userId} = user.id `,
         function (error, results, fields) {
           connection.release();
-          if (error) throw error;
+          if (error) next(error);
           console.log("user: ", results);
           res.status(200).json({
             status: 200,
