@@ -1,7 +1,5 @@
 // Authentication controller
 const assert = require("assert");
-const { del } = require("express/lib/application");
-const { rmSync } = require("fs");
 const jwt = require("jsonwebtoken");
 const dbconnection = require("../../database/dbconnection");
 const logger = require("../../config/config").logger;
@@ -49,18 +47,16 @@ module.exports = {
                 };
 
                 jwt.sign(
-                  { userId: user.id },
+                  payload,
                   jwtSecretKey,
                   { expiresIn: "12d" },
                   function (err, token) {
-                    if (err) next(err);
-                    if (token) {
-                      console.log("token: ", token);
-                      res.status(200).json({
-                        status: 200,
-                        result: { ...user, token },
-                      });
-                    }
+                    logger.debug("User logged in, sending: ", userinfo);
+                    logger.debug("jwtSecretKey: ", jwtSecretKey);
+                    res.status(200).json({
+                      status: 200,
+                      result: { ...userinfo, token },
+                    });
                   }
                 );
               } else {
