@@ -52,7 +52,7 @@ module.exports = {
                   { expiresIn: "12d" },
                   function (err, token) {
                     logger.debug("User logged in, sending: ", userinfo);
-                    logger.debug("jwtSecretKey: ", jwtSecretKey);
+                    logger.debug("jwtSecretKey: ", token);
                     res.status(200).json({
                       status: 200,
                       result: { ...userinfo, token },
