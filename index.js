@@ -1,22 +1,26 @@
 const express = require("express");
-const authRoutes = require("./src/routes/authentication.routes");
-const userRouter = require("./src/routes/user.routes");
-const dbconnection = require("./database/dbConnection");
-const logger = require("./config/config").logger;
-require("dotenv").config();
-
 const app = express();
+
+const authRoutes = require("./src/routes/authentication.routes");
+const logger = require("./config/config").logger;
+
+require("dotenv").config();
 const port = process.env.PORT;
-app.use(express.json());
+
+const bodyParser = require("body-parser");
+app.use(bodyParser.json());
+const userRouter = require("./src/routes/user.routes");
+const mealRouter = require("./src/routes/meal.routes");
 
 app.all("*", (req, res, next) => {
   const method = req.method;
-  console.log(`Method ${method} is aangeroepen`);
+  logger.debug(`Method ${method} is aangeroepen`);
   next();
 });
 
 app.use("/api", userRouter);
 app.use("/api", authRoutes);
+app.use("/api", mealRouter);
 
 app.all("*", (req, res) => {
   res.status(401).json({
