@@ -12,12 +12,12 @@ router.get("/", (req, res) => {
 
 router.post(
   "/users",
-  authController.validateToken,
+  // authController.validateToken,
   userController.validateUser,
   userController.addUser
 );
 
-router.get("/users/profile", userController.getUser);
+router.get("/users/profile", userController.getUserProfileFromId);
 
 router.get("/users", authController.validateToken, userController.getAllUser);
 

@@ -18,9 +18,7 @@ app.all("*", (req, res, next) => {
   next();
 });
 
-app.use("/api", userRouter);
-app.use("/api", authRoutes);
-app.use("/api", mealRouter);
+app.use("/api", userRouter, mealRouter, authRoutes);
 
 app.all("*", (req, res) => {
   res.status(401).json({
@@ -30,11 +28,8 @@ app.all("*", (req, res) => {
 });
 
 app.use((err, req, res, next) => {
-  logger.debug("Error handler called.");
-  res.status(500).json({
-    statusCode: 500,
-    message: err.toString(),
-  });
+  console.log(err);
+  res.status(err.status).json(err);
 });
 
 app.listen(port, () => {
