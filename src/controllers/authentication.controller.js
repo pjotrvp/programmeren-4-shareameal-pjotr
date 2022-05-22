@@ -4,8 +4,8 @@ const { del } = require("express/lib/application");
 const { rmSync } = require("fs");
 const jwt = require("jsonwebtoken");
 const dbconnection = require("../../database/dbconnection");
-const logger = require("../config/config").logger;
-const jwtSecretKey = require("../config/config").jwtSecretKey;
+const logger = require("../../config/config").logger;
+const jwtSecretKey = require("../../config/config").jwtSecretKey;
 
 module.exports = {
   login(req, res, next) {
@@ -49,15 +49,18 @@ module.exports = {
                 };
 
                 jwt.sign(
-                  payload,
+                  { userId: user.id },
                   jwtSecretKey,
                   { expiresIn: "12d" },
                   function (err, token) {
-                    logger.debug("User logged in, sending: ", userinfo);
-                    res.status(200).json({
-                      statusCode: 200,
-                      results: { ...userinfo, token },
-                    });
+                    if (err) next(err);
+                    if (token) {
+                      console.log("token: ", token);
+                      res.status(200).json({
+                        status: 200,
+                        result: { ...user, token },
+                      });
+                    }
                   }
                 );
               } else {

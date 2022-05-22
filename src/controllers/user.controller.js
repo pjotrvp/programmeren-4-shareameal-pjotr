@@ -1,6 +1,6 @@
 const assert = require("assert");
 const logger = require("../../config/config").logger;
-const dbConnection = require("../../database/dbConnection");
+const dbconnection = require("../../database/dbConnection");
 
 let controller = {
   validateUser: (req, res, next) => {
@@ -8,11 +8,9 @@ let controller = {
     let {
       firstName,
       lastName,
-      isActive,
       emailAdress,
       password,
       phoneNumber,
-      roles,
       street,
       city,
     } = user;
@@ -50,11 +48,9 @@ let controller = {
     let {
       firstName,
       lastName,
-      isActive,
       emailAdress,
       password,
       phoneNumber,
-      roles,
       street,
       city,
     } = user;
@@ -114,7 +110,7 @@ let controller = {
                 user.isActive = user.isActive ? true : false;
                 res.status(201).json({
                   status: 201,
-                  result: user,
+                  result: { user, token },
                 });
               }
             );
