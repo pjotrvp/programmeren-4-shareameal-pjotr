@@ -1,99 +1,53 @@
-#
-# GitLab example CI/CD script
-# See https://docs.gitlab.com/ee/ci/yaml/README.html
-#
-# Secure Variables like $DB_PASSWORD can added by going to your
-# project’s Settings ➔ CI / CD ➔ Variables on the GitLab website.
-#
-image: node:latest
+name: Deploy to Heroku
 
-stages:
-  - test
-  - metrics
-  - deploy
+on:
+  push:
+    branches:
+      - main
 
-cache:
-  key: $CI_COMMIT_REF_SLUG
-  paths:
-    - node_modules
+jobs:
+  integrationtests:
+    runs-on: ubuntu-latest
+    env:
+      MYSQL_ROOT_PASSWORD: root
+      DB_HOST: localhost
+      DB_PORT: 3306
+      DB_DATABASE: 2171623
+      DB_USER: root
+      DB_PASSWORD: root
+    services:
+      mysql:
+        image: mysql:5.7
+        ports:
+          - 3306
+    steps:
+      - uses: actions/checkout@v2
 
-#
-# Global variables
-#
-variables:
-  DOCKER_HOST: tcp://docker:2375/
-  DOCKER_DRIVER: overlay2
-
-#
-# Run unittests
-#
-unittests:
-  image: markhobson/node-chrome:latest
-  stage: test
-  variables:
-    NODE_ENV: development
-    # DB_USER: $DB_USER
-    # DB_PASSWORD: $DB_PASSWORD
-    # DB_HOST: $DB_HOST
-    # DB_PORT: $DB_PORT
-    # DB_DATABASE: $DB_DATABASE
-  before_script:
-    - npm install --no-optional
-  script:
-    - echo 'Testing not implemented yet!'
-  only:
-    - master
-
-#
-# Run end-to-end tests
-#
-# end2end:
-#   image: markhobson/node-chrome:latest
-#   stage: test
-#   variables:
-#     NODE_ENV: development
-#   before_script:
-#     - npm install --no-optional
-#   script:
-#     - google-chrome --version
-#     # - node ./node_modules/protractor/bin/webdriver-manager update --versions.chrome=76.0.3809.100
-#     - node ./node_modules/protractor/bin/webdriver-manager update
-#     - npm run e2e
-
-#
-# Deploy to Heroku
-# DPL is a deploy tool made for continuous deployment that’s developed and used
-# by Travis CI, but can also be used with GitLab CI.
-# https://docs.gitlab.com/ee/ci/examples/deployment/#using-dpl-with-docker
-#
-production:
-  stage: deploy
-  image: ruby:latest
-  script:
-    # Get your key at https://dashboard.heroku.com/account
-    # and add it to your project environment variables at GitLab.
-    - echo "Heroku api key = $HEROKU_API_KEY"
-    # The name of your app at Heroku. See https://dashboard.heroku.com/apps.
-    - echo "Heroku appname = $HEROKU_APP_NAME"
-    - apt-get update -qy
-    - apt-get install -y ruby-dev
-    - gem install dpl
-    - dpl --provider=heroku --app=$HEROKU_APP_NAME --api-key=$HEROKU_API_KEY
-  only:
-    - master
-
-#
-# Example: Deploy to Google Firebase, as an alternative to Heroku
-#
-firebase:
-  stage: deploy
-  image: markhobson/node-chrome:latest
-  before_script:
-    - npm i --no-optional
-    - npm i -g firebase-tools
-  script:
-    - npm run build
-    - firebase deploy --token $FIREBASE_TOKEN
-  only:
-    # - master
-    - firebase-branch
+      - name: Start MySQL connection from host
+        run: |
+          sudo /etc/init.d/mysql start
+          sudo apt-get install -y mysql-client
+          mysql -uroot -p${{ env.MYSQL_ROOT_PASSWORD }} -e "SHOW DATABASES;"
+          mysql -uroot -p${{ env.MYSQL_ROOT_PASSWORD }} -e "CREATE DATABASE ${{env.DB_DATABASE}};"
+      - name: Import the database
+        run: |
+          mysql -uroot -p${{env.MYSQL_ROOT_PASSWORD}} ${{env.DB_DATABASE}} < share-a-meal.sql
+          mysql -uroot -p${{env.MYSQL_ROOT_PASSWORD}} ${{env.DB_DATABASE}} -e "SHOW TABLES;"
+      - name: npm install
+        run: |
+          npm install
+      - name: npm test
+        run: |
+          npm test -- --DB_PASSWORD $MYSQL_ROOT_PASSWORD --DB_USER root --DB_NAME $DB_DATABASE
+  deploy:
+    needs: integrationtests
+    runs-on: ubuntu-latest
+    environment:
+      name: Heroku
+    steps:
+      - uses: actions/checkout@v2
+      - uses: akhileshns/heroku-deploy@v3.12.12
+        with:
+          heroku_api_key: ${{secrets.HEROKU_API_KEY}}
+          heroku_app_name: ${{secrets.HEROKU_APP_NAME}}
+          heroku_email: ${{secrets.HEROKU_EMAIL}}
