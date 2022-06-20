@@ -1,8 +1,6 @@
-const dbConnection = require("../../database/dbConnection");
+const dbconnection = require("../../database/dbconnection");
 const logger = require("../../config/config").logger;
 const assert = require("assert");
-const { resourceUsage } = require("process");
-const { rollback } = require("../../database/dbconnection");
 
 let controller = {
   validateMeal: (req, res, next) => {
@@ -65,17 +63,17 @@ let controller = {
     let cookId = req.userId;
     let price = parseFloat(meal.price);
     logger.debug(meal);
-    dbConnection.getConnection(function (err, connection) {
+    dbconnection.getConnection(function (err, connection) {
       if (err) throw err;
 
       connection.query(
-        `INSERT INTO meal (datetime, maxAmountOfParticipants, price, imageUrl, cookId, name, description, isActive, isVega, isVegan, isToTakeHome) VALUES(STR_TO_DATE(?,'%Y-%m-%dT%H:%i:%s.%fZ'), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+        `INSERT INTO meal (name, description, price, dateTime, imageUrl, isToTakeHome, isVegan, isVega, isActive, maxAmountOfParticipants, cookId) VALUES ('${meal.name}', '${meal.description}', '${meal.price}', '${meal.dateTime}', '${meal.imageUrl}', '${meal.isToTakeHome}', '${meal.isVegan}', '${meal.isVega}', '${meal.isActive}', '${meal.maxAmountOfParticipants}','${cookId}')`,
         [
           meal.dateTime,
           meal.maxAmountOfParticipants,
           price,
           meal.imageUrl,
-          cookId,
+          Number(cookId),
           meal.name,
           meal.description,
           meal.isActive,
@@ -84,19 +82,12 @@ let controller = {
           meal.isToTakeHome,
         ],
         function (error, results, fields) {
-          if (error) {
-            logger.debug(error);
-            connection.release();
-            const newError = {
-              status: 409,
-              message: `Meal not created`,
-            };
-            next(newError);
-          } else {
+          connection.release();
+          if (error) next(error);
+          else {
             connection.query(
               "SELECT * FROM meal ORDER BY id DESC LIMIT 1;",
               function (error, results, fields) {
-                connection.release();
                 results[0].price = price;
 
                 results[0].isActive = meal.isActive ? true : false;
