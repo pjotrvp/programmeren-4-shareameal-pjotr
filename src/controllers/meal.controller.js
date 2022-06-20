@@ -1,4 +1,4 @@
-const dbconnection = require("../../database/dbconnection");
+const dbConnection = require("../../database/dbConnection");
 const logger = require("../../config/config").logger;
 const assert = require("assert");
 
@@ -63,7 +63,7 @@ let controller = {
     let cookId = req.userId;
     let price = parseFloat(meal.price);
     logger.debug(meal);
-    dbconnection.getConnection(function (err, connection) {
+    dbConnection.getConnection(function (err, connection) {
       if (err) throw err;
 
       connection.query(
@@ -109,7 +109,7 @@ let controller = {
     });
   },
   getAllMeals: (req, res, next) => {
-    dbconnection.getConnection(function (error, connection) {
+    dbConnection.getConnection(function (error, connection) {
       if (error) throw error;
       connection.query("SELECT * FROM meal", function (error, result, fields) {
         connection.release();
@@ -124,7 +124,7 @@ let controller = {
   },
   getMealById: (req, res, next) => {
     const mealId = req.params.mealId;
-    dbconnection.getConnection(function (error, connection) {
+    dbConnection.getConnection(function (error, connection) {
       if (error) throw error;
       connection.query(
         "SELECT * FROM meal WHERE id = ?",
@@ -163,7 +163,7 @@ let controller = {
     let price = parseFloat(newMealInfo.price);
     let updateAllergenes = req.body.allergenes.join();
 
-    dbconnection.getConnection(function (err, connection) {
+    dbConnection.getConnection(function (err, connection) {
       if (err) throw err;
       connection.query(
         `UPDATE meal SET name = ?, description = ?, isActive = ?, isVega = ?, isVegan = ?, isToTakeHome = ?, dateTime = STR_TO_DATE(?,'%Y-%m-%dT%H:%i:%s.%fZ'), imageUrl = ?, allergenes = ?, maxAmountOfParticipants = ?, price = ? WHERE id = ?;`,
@@ -231,7 +231,7 @@ let controller = {
     const mealId = req.params.mealId;
     const userId = req.userId;
 
-    dbconnection.getConnection(function (error, connection) {
+    dbConnection.getConnection(function (error, connection) {
       // Get Meal before deleting
       connection.query(
         "SELECT * FROM meal WHERE id = " + mealId,
@@ -266,7 +266,7 @@ let controller = {
     const newUserId = req.userId;
     const mealId = req.params.mealId;
 
-    dbconnection.getConnection(function (error, connection) {
+    dbConnection.getConnection(function (error, connection) {
       if (error) throw error;
       // Get the meal information
       connection.query(

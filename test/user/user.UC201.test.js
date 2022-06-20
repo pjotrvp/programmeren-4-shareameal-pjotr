@@ -6,7 +6,7 @@ const chaiHttp = require("chai-http");
 const server = require("../../index");
 const assert = require("assert");
 require("dotenv").config();
-const dbconnection = require("../../database/dbconnection");
+const dbConnection = require("../../database/dbConnection");
 const jwt = require("jsonwebtoken");
 const { jwtSecretKey, logger } = require("../../config/config");
 
@@ -24,7 +24,7 @@ const INSERT_USER2 = `INSERT INTO user (firstName, lastName, emailAdress, passwo
 
 describe("UC-201: Register users, User Controller /api/user", () => {
   beforeEach((done) => {
-    dbconnection.query(
+    dbConnection.query(
       CLEAR_MEAL_TABLE +
         CLEAR_USER_TABLE +
         CLEAR_PARTICIPANT_TABLE +

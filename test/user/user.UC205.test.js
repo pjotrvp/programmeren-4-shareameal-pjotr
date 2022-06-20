@@ -6,7 +6,7 @@ const chaiHttp = require("chai-http");
 const server = require("../../index");
 const assert = require("assert");
 require("dotenv").config();
-const dbconnection = require("../../database/dbconnection");
+const dbConnection = require("../../database/dbConnection");
 const jwt = require("jsonwebtoken");
 const { jwtSecretKey, logger } = require("../../config/config");
 
