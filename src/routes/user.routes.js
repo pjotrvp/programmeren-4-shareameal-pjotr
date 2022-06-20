@@ -17,12 +17,12 @@ router.post(
   userController.addUser
 );
 
-router.get("/users/profile", userController.getUser);
+router.get("/users/profile", userController.getUserProfileFromId);
 
 router.get("/users", authController.validateToken, userController.getAllUser);
 
 router.get(
-  "/user/:userId",
+  "/users/:userId",
   authController.validateToken,
   userController.getUserById
 );
