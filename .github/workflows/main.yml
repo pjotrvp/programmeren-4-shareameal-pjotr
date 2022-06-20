@@ -12,7 +12,7 @@ jobs:
       MYSQL_ROOT_PASSWORD: root
       DB_HOST: localhost
       DB_PORT: 3306
-      DB_DATABASE: 2171623
+      DB_DATABASE: sharemeal
       DB_USER: root
       DB_PASSWORD: root
     services:
