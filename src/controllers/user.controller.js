@@ -110,7 +110,7 @@ let controller = {
                 user.isActive = user.isActive ? true : false;
                 res.status(201).json({
                   status: 201,
-                  result: { user, token },
+                  result: { user },
                 });
               }
             );
