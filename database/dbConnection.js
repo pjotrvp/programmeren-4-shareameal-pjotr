@@ -23,5 +23,5 @@ pool.on("release", (connection) => {
 });
 
 pool.on("connection", (connection) => {
-  logger.debug(`Connected to database '${connection.config.database}'`);
+  console.log(`Connected to database '${connection.config.database}'`);
 });

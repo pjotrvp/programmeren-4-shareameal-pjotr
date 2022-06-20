@@ -95,25 +95,22 @@ let controller = {
         ],
         function (error, result, fields) {
           if (error) {
-            connection.release();
-            res.status(409).json({
-              status: 409,
-              message: `The email-address: ${user.emailAdress} has already been taken!`,
-            });
+            if (error.code == "ER_DUP_ENTRY") {
+              res.status(409).json({
+                status: 409,
+                result: "User already exists",
+              });
+            } else {
+              res.status(400).json({
+                status: 400,
+                result: "Email is invalid",
+              });
+            }
           } else {
-            connection.query(
-              `SELECT * FROM user WHERE emailAdress = ?`,
-              [user.emailAdress],
-              function (error, results, fields) {
-                connection.release();
-                user = results[0];
-                user.isActive = user.isActive ? true : false;
-                res.status(201).json({
-                  status: 201,
-                  result: { user },
-                });
-              }
-            );
+            res.status(201).json({
+              status: 201,
+              result: user,
+            });
           }
         }
       );
