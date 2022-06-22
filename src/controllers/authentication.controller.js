@@ -84,8 +84,8 @@ module.exports = {
         typeof req.body.emailAdress === "string",
         "email must be a string."
       );
-      assert(req.body.emailAdress != null, "email cannot be null");
-      assert(req.body.password != null, "password cannot be null");
+      assert(typeof emailAdress === "string", "email cannot be null");
+      assert(typeof password === "string", "password cannot be null");
       assert.match(
         req.body.password,
         /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])[0-9a-zA-Z]{8,}$/,

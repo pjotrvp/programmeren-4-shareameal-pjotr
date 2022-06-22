@@ -9,6 +9,7 @@ require("dotenv").config();
 const dbConnection = require("../../database/dbConnection");
 const jwt = require("jsonwebtoken");
 const { jwtSecretKey, logger } = require("../../config/config");
+const { beforeEach } = require("mocha");
 
 chai.should();
 chai.use(chaiHttp);
@@ -24,14 +25,33 @@ const INSERT_USER2 = `INSERT INTO user (firstName, lastName, emailAdress, passwo
 const INSERT_MEAL = `INSERT INTO meal (id, isActive, isVega, isVegan, isToTakeHome, dateTime, maxAmountOfParticipants, price, imageUrl, cookId, name, description) VALUES (1, 1, 1, 1, 1, '2022-05-20 06:36:27', 6, 6.75, 'https://miljuschka.nl/wp-content/uploads/2021/02/Pasta-bolognese-3-2.jpg', 1, 'Spaghetti Bolognese', 'Dé pastaklassieker bij uitstek.')`;
 const INSERT_MEAL2 = `INSERT INTO meal (id, isActive, isVega, isVegan, isToTakeHome, dateTime, maxAmountOfParticipants, price, imageUrl, cookId, name, description) VALUES (2, 0, 0, 0, 0, '2022-06-20 06:36:27', 7, 7.75, 'https://miljuschka.nl/wp-content/uploads/2021/02/Pasta-bolognese-3-2.jpg', 2, 'Spaghetti Bolognese 2', 'Dé pastaklassieker bij uitstek 2.')`;
 
-describe("UC-101: Login functionality different test cases, /auth/login", () => {});
+describe("UC-101: Login functionality different test cases, /auth/login", () => {
+  beforeEach((done) => {
+    dbConnection.query(
+      CLEAR_MEAL_TABLE +
+        CLEAR_USER_TABLE +
+        CLEAR_PARTICIPANT_TABLE +
+        AUTO_INCREMENT_MEAL +
+        AUTO_INCREMENT_USER +
+        AUTO_INCREMENT_PARTICIPANTS +
+        INSERT_USER +
+        INSERT_USER2,
+      (err, result) => {
+        if (err) {
+          logger.error(err);
+        }
+        done();
+      }
+    );
+  });
 
-describe("TC-101-1: required field missing", () => {});
+  describe("TC-101-1: required field missing", () => {});
 
-describe("TC-101-2: invalid e-mail adress", () => {});
+  describe("TC-101-2: invalid e-mail adress", () => {});
 
-describe("TC-101-3: invalid password", () => {});
+  describe("TC-101-3: invalid password", () => {});
 
-describe("TC-101-4: user does not exist", () => {});
+  describe("TC-101-4: user does not exist", () => {});
 
-describe("TC-101-5: user logged in succesfully", () => {});
+  describe("TC-101-5: user logged in succesfully", () => {});
+});
