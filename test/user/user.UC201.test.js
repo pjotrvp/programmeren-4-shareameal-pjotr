@@ -9,6 +9,8 @@ require("dotenv").config();
 const dbConnection = require("../../database/dbConnection");
 const jwt = require("jsonwebtoken");
 const { jwtSecretKey, logger } = require("../../config/config");
+const bcrypt = require("bcrypt");
+const salt = bcrypt.genSaltSync(10);
 
 chai.should();
 chai.use(chaiHttp);
@@ -16,11 +18,13 @@ chai.use(chaiHttp);
 const CLEAR_MEAL_TABLE = `DELETE IGNORE FROM meal;`;
 const CLEAR_PARTICIPANT_TABLE = `DELETE IGNORE FROM meal_participants_user;`;
 const CLEAR_USER_TABLE = `DELETE IGNORE FROM user;`;
-const INSERT_USER = `INSERT INTO user (firstName, lastName, emailAdress, password, phoneNumber, street, city, isActive) VALUES ('test', 'test', 'test@test.com', 'testT2123', '12345678', 'test', 'test', true);`;
+const INSERT_USER = `INSERT INTO user (firstName, lastName, emailAdress, password, phoneNumber, street, city, isActive) VALUES ('test', 'test', 'test@test.com', '${bcrypt.hashSync(
+  "testT2123",
+  salt
+)}', '12345678', 'test', 'test', true);`;
 const AUTO_INCREMENT_USER = `ALTER TABLE user AUTO_INCREMENT = 1;`;
 const AUTO_INCREMENT_MEAL = `ALTER TABLE meal AUTO_INCREMENT = 1;`;
 const AUTO_INCREMENT_PARTICIPANTS = `ALTER TABLE meal_participants_user AUTO_INCREMENT = 1;`;
-const INSERT_USER2 = `INSERT INTO user (firstName, lastName, emailAdress, password, phoneNumber, street, city, isActive) VALUES ('test', 'test', 'test2@test.com', 'testT2123', '22345678', 'test', 'test', true);`;
 
 describe("UC-201: Register users, User Controller /api/user", () => {
   beforeEach((done) => {
@@ -31,8 +35,7 @@ describe("UC-201: Register users, User Controller /api/user", () => {
         AUTO_INCREMENT_MEAL +
         AUTO_INCREMENT_USER +
         AUTO_INCREMENT_PARTICIPANTS +
-        INSERT_USER +
-        INSERT_USER2,
+        INSERT_USER,
       (err, result) => {
         if (err) {
           logger.error(err);
@@ -52,7 +55,7 @@ describe("UC-201: Register users, User Controller /api/user", () => {
           firstName: "John",
           lastName: "Doe",
           // emailAdress is missing
-          password: "123456Abc",
+          password: "testT2123",
           phoneNumber: "0612345678",
           street: "street",
           city: "city",
@@ -63,7 +66,7 @@ describe("UC-201: Register users, User Controller /api/user", () => {
           res.should.be.a("object");
           let { status, result } = res.body;
           status.should.be.eql(400);
-          result.should.be.eql("emailAdress cannot be null!");
+          result.should.be.eql("Email is required");
           done();
         });
     });
@@ -79,7 +82,7 @@ describe("UC-201: Register users, User Controller /api/user", () => {
           firstName: "John",
           lastName: "Doe",
           emailAdress: "Paris",
-          password: "123456Abc",
+          password: "testT2123",
           phoneNumber: "0612345678",
           street: "street",
           city: "city",
@@ -90,7 +93,7 @@ describe("UC-201: Register users, User Controller /api/user", () => {
           res.should.be.a("object");
           let { status, result } = res.body;
           status.should.be.eql(400);
-          result.should.be.eql("Invalid emailadres");
+          result.should.be.eql("Email is invalid");
           done();
         });
     });
@@ -118,7 +121,7 @@ describe("UC-201: Register users, User Controller /api/user", () => {
           let { status, result } = res.body;
           status.should.be.eql(400);
           result.should.be.eql(
-            "Password must contain 8-15 characters which contains at least one lower- and uppercase letter, one special character and one digit"
+            "Password is invalid, min. 8 characters, 1 uppercase, 1 lowercase, 1 number"
           );
           done();
         });
@@ -134,8 +137,8 @@ describe("UC-201: Register users, User Controller /api/user", () => {
         .send({
           firstName: "John",
           lastName: "Doe",
-          emailAdress: "test2@test.com",
-          password: "223456Abc",
+          emailAdress: "test@test.com",
+          password: "testT2123",
           phoneNumber: "0612345678",
           street: "street",
           city: "city",
