@@ -1,6 +1,6 @@
 const assert = require("assert");
 const logger = require("../../config/config").logger;
-const dbconnection = require("../../database/dbConnection");
+const dbConnection = require("../../database/dbConnection");
 
 let controller = {
   validateUser: (req, res, next) => {
@@ -80,7 +80,7 @@ let controller = {
   },
   addUser: (req, res) => {
     let user = req.body;
-    dbconnection.getConnection(function (error, connection) {
+    dbConnection.getConnection(function (error, connection) {
       if (error) throw error;
       connection.query(
         "INSERT INTO user (firstName, lastName, street, city, phoneNumber, emailAdress, password) VALUES(?,?, ?, ?, ?, ?, ?);",
@@ -95,25 +95,22 @@ let controller = {
         ],
         function (error, result, fields) {
           if (error) {
-            connection.release();
-            res.status(409).json({
-              status: 409,
-              message: `The email-address: ${user.emailAdress} has already been taken!`,
-            });
+            if (error.code == "ER_DUP_ENTRY") {
+              res.status(409).json({
+                status: 409,
+                result: "User already exists",
+              });
+            } else {
+              res.status(400).json({
+                status: 400,
+                result: "Email is invalid",
+              });
+            }
           } else {
-            connection.query(
-              `SELECT * FROM user WHERE emailAdress = ?`,
-              [user.emailAdress],
-              function (error, results, fields) {
-                connection.release();
-                user = results[0];
-                user.isActive = user.isActive ? true : false;
-                res.status(201).json({
-                  status: 201,
-                  result: { user },
-                });
-              }
-            );
+            res.status(201).json({
+              status: 201,
+              result: user,
+            });
           }
         }
       );
@@ -122,7 +119,7 @@ let controller = {
 
   getUserProfileFromId: (req, res, next) => {
     const userId = req.userId;
-    dbconnection.getConnection(function (error, connection) {
+    dbConnection.getConnection(function (error, connection) {
       if (error) throw error;
       connection.query(
         "SELECT * FROM user WHERE id = ?",
@@ -150,7 +147,7 @@ let controller = {
   },
   getUserById: (req, res) => {
     const userId = req.params.userId;
-    dbconnection.getConnection(function (err, connection) {
+    dbConnection.getConnection(function (err, connection) {
       if (err) throw error;
       connection.query(
         "SELECT * FROM user WHERE id = " + userId + "",
@@ -197,7 +194,7 @@ let controller = {
       dbQuery = `SELECT * FROM user WHERE firstname LIKE '%${firstName}%'`;
 
     // Retrieve users
-    dbconnection.getConnection(function (err, connection) {
+    dbConnection.getConnection(function (err, connection) {
       if (err) throw err;
       connection.query(dbQuery, function (error, result, fields) {
         connection.release();
@@ -219,7 +216,7 @@ let controller = {
     const userId = req.params.userId;
     const updateUser = req.body;
     logger.debug(`User with ID ${userId} requested to be updated`);
-    dbconnection.getConnection(function (err, connection) {
+    dbConnection.getConnection(function (err, connection) {
       if (err) throw err;
       connection.query(
         "UPDATE user SET firstName=?, lastName=?, isActive=?, emailAdress=?, password=?, phoneNumber=?, street=?, city=? WHERE id = ?;",
@@ -266,7 +263,7 @@ let controller = {
   },
   deleteUser: (req, res) => {
     const userId = req.params.userId;
-    dbconnection.getConnection(function (err, connection) {
+    dbConnection.getConnection(function (err, connection) {
       if (err) throw error;
       connection.query(
         "DELETE IGNORE FROM user WHERE Id = " + userId,

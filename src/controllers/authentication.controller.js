@@ -1,15 +1,15 @@
 // Authentication controller
 const assert = require("assert");
 const jwt = require("jsonwebtoken");
-const dbconnection = require("../../database/dbconnection");
+const dbConnection = require("../../database/dbConnection");
 const logger = require("../../config/config").logger;
 const jwtSecretKey = require("../../config/config").jwtSecretKey;
 
 module.exports = {
   login(req, res, next) {
-    dbconnection.getConnection((err, connection) => {
+    dbConnection.getConnection((err, connection) => {
       if (err) {
-        logger.error("Error getting connection from dbconnection");
+        logger.error("Error getting connection from dbConnection");
         res.status(500).json({
           error: err.toString(),
           datetime: new Date().toISOString(),
@@ -84,8 +84,8 @@ module.exports = {
         typeof req.body.emailAdress === "string",
         "email must be a string."
       );
-      assert(req.body.emailAdress != null, "email cannot be null");
-      assert(req.body.password != null, "password cannot be null");
+      assert(typeof emailAdress === "string", "email cannot be null");
+      assert(typeof password === "string", "password cannot be null");
       assert.match(
         req.body.password,
         /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])[0-9a-zA-Z]{8,}$/,
@@ -109,7 +109,7 @@ module.exports = {
   validateOwnership(req, res, next) {
     const userId = req.userId;
     const mealId = req.params.mealId;
-    dbconnection.getConnection(function (err, connection) {
+    dbConnection.getConnection(function (err, connection) {
       if (err) throw err;
       connection.query(
         "SELECT * FROM meal WHERE id = ?;",
@@ -140,7 +140,7 @@ module.exports = {
     const userId = req.userId;
     const deletingUserId = req.params.userId;
 
-    dbconnection.getConnection(function (error, connection) {
+    dbConnection.getConnection(function (error, connection) {
       if (error) throw error;
       connection.query(
         "SELECT * FROM user WHERE id=?",

@@ -38,7 +38,7 @@ app.listen(port, () => {
 
 process.on("SIGINT", () => {
   logger.debug("SIGINT signal received: closing HTTP server");
-  dbconnection.end((err) => {
+  dbConnection.end((err) => {
     logger.debug("Database connection closed");
   });
   app.close(() => {
