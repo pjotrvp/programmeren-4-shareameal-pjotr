@@ -1,10 +1,60 @@
 const assert = require("assert");
 const logger = require("../../config/config").logger;
 const dbConnection = require("../../database/dbConnection");
+const bcrypt = require("bcrypt");
+
+const salt = bcrypt.genSaltSync(10);
+const FORBIDDEN_TERMINAL_CHARACTERS = [
+  `!`,
+  `#`,
+  `$`,
+  `%`,
+  `&`,
+  `'`,
+  `*`,
+  `+`,
+  `-`,
+  `/`,
+  `=`,
+  `?`,
+  `^`,
+  `_`,
+  "`",
+  `{`,
+  `|`,
+  `}`,
+  `~`,
+];
+let emailIsValid = (emailAdress) => {
+  let syntaxGood = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailAdress);
+  if (!syntaxGood) return false;
+  for (let badChar of FORBIDDEN_TERMINAL_CHARACTERS) {
+    if (emailAdress.startsWith(badChar) || emailAdress.endsWith(badChar)) {
+      return false;
+    }
+  }
+  return true;
+};
+
+let passwordIsValid = (password) => {
+  let regex = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}$/;
+  if (!regex.test(password)) {
+    return false;
+  }
+  return true;
+};
+
+let phoneNumberIsValid = (phoneNumber) => {
+  let regex = /^[0-9]{10}$/;
+  if (!regex.test(phoneNumber)) {
+    return false;
+  }
+  return true;
+};
 
 let controller = {
   validateUser: (req, res, next) => {
-    let user = req.body;
+    user = req.body;
     let {
       firstName,
       lastName,
@@ -15,75 +65,42 @@ let controller = {
       city,
     } = user;
     try {
-      assert.match(
-        password,
-        /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])[0-9a-zA-Z]{8,}$/,
-        "Password must contain 8-15 characters which contains at least one lower- and uppercase letter, one special character and one digit"
+      assert(emailAdress, "Email is required");
+      assert(emailIsValid(emailAdress), "Email is invalid");
+      assert(
+        passwordIsValid(password),
+        "Password is invalid, min. 8 characters, 1 uppercase, 1 lowercase, 1 number"
       );
-      assert(typeof emailAdress === "string", "emailAdress cannot be null!");
-      assert.match(
-        emailAdress,
-        /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/,
-        "Invalid emailadres"
-      );
-      assert(typeof firstName === "string", "First name cannot be null!");
-      assert(typeof lastName === "string", "Last name cannot be null!");
-      assert(typeof phoneNumber === "string", "Phonenumber cannot be null!");
-      assert.match(phoneNumber, /^\d{10}$/, "Phone should be 10 digits");
-      assert(typeof password === "string", "Password cannot be null!");
-      assert(typeof street === "string", "Street cannot be null!");
-      assert(typeof city === "string", "City cannot be null!");
+      assert(firstName, "First name is required");
+      assert(lastName, "Last name is required");
+      assert(phoneNumberIsValid(phoneNumber), "Phone number is invalid");
+      assert(street, "Street is required");
+      assert(city, "City is required");
       next();
     } catch (err) {
-      const error = {
+      res.status(400).json({
         status: 400,
         result: err.message,
-      };
-      next(error);
+      });
+      next(err);
     }
   },
 
-  validateUpdateUser: (req, res, next) => {
-    let user = req.body;
-    let {
-      firstName,
-      lastName,
-      emailAdress,
-      password,
-      phoneNumber,
-      street,
-      city,
-    } = user;
-    try {
-      assert(typeof emailAdress === "string", "emailAdress cannot be null!");
-      assert.match(
-        emailAdress,
-        /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/,
-        "Invalid emailadres"
-      );
-      assert(typeof firstName === "string", "First Name cannot be null!");
-      assert(typeof lastName === "string", "Last Name cannot be null!");
-      assert(typeof phoneNumber === "string", "Phonenumber cannot be null!");
-      assert.match(
-        phoneNumber,
-        /(^\+[0-9]{2}|^\+[0-9]{2}\(0\)|^\(\+[0-9]{2}\)\(0\)|^00[0-9]{2}|^0)([0-9]{9}$|[0-9\-\s]{10}$)/,
-        "Phonenumber should be 10 digits"
-      );
-      assert(typeof password === "string", "Password cannot be null!");
-      assert(typeof street === "string", "Street cannot be null!");
-      assert(typeof city === "string", "City cannot be null!");
-      next();
-    } catch (err) {
-      const error = { status: 400, message: err.message };
-      next(error);
-    }
-  },
   addUser: (req, res) => {
-    let user = req.body;
+    user = {
+      firstName: req.body.firstName,
+      lastName: req.body.lastName,
+      emailAdress: req.body.emailAdress,
+      password: bcrypt.hashSync(req.body.password, salt),
+      phoneNumber: req.body.phoneNumber,
+      street: req.body.street,
+      city: req.body.city,
+      isActive: 1,
+    };
     dbConnection.getConnection(function (error, connection) {
       if (error) throw error;
       connection.query(
-        "INSERT INTO user (firstName, lastName, street, city, phoneNumber, emailAdress, password) VALUES(?,?, ?, ?, ?, ?, ?);",
+        `INSERT INTO user (firstName, lastName, emailAdress, password, phoneNumber, street, city, isActive) VALUES ('${user.firstName}', '${user.lastName}', '${user.emailAdress}', '${user.password}', '${user.phoneNumber}', '${user.street}', '${user.city}', '${user.isActive}')`,
         [
           user.firstName,
           user.lastName,
@@ -287,14 +304,5 @@ let controller = {
     });
   },
 };
-let emailIsValid = (email) => {
-  let syntaxGood = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  if (!syntaxGood) return false;
-  for (let badChar of FORBIDDEN_TERMINAL_CHARACTERS) {
-    if (email.startsWith(badChar) || email.endsWith(badChar)) {
-      return false;
-    }
-  }
-  return true;
-};
+
 module.exports = controller;

@@ -4,66 +4,112 @@ const jwt = require("jsonwebtoken");
 const dbConnection = require("../../database/dbConnection");
 const logger = require("../../config/config").logger;
 const jwtSecretKey = require("../../config/config").jwtSecretKey;
+const bcrypt = require("bcrypt");
+
+const FORBIDDEN_TERMINAL_CHARACTERS = [
+  `!`,
+  `#`,
+  `$`,
+  `%`,
+  `&`,
+  `'`,
+  `*`,
+  `+`,
+  `-`,
+  `/`,
+  `=`,
+  `?`,
+  `^`,
+  `_`,
+  "`",
+  `{`,
+  `|`,
+  `}`,
+  `~`,
+];
+let emailIsValid = (emailAdress) => {
+  let syntaxGood = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailAdress);
+  if (!syntaxGood) return false;
+  for (let badChar of FORBIDDEN_TERMINAL_CHARACTERS) {
+    if (emailAdress.startsWith(badChar) || emailAdress.endsWith(badChar)) {
+      return false;
+    }
+  }
+  return true;
+};
+
+let passwordIsValid = (password) => {
+  let regex = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}$/;
+  if (!regex.test(password)) {
+    return false;
+  }
+  return true;
+};
 
 module.exports = {
-  login(req, res, next) {
-    dbConnection.getConnection((err, connection) => {
+  login: (req, res, next) => {
+    const { emailAdress, password } = req.body;
+
+    dbConnection.getConnection(function (err, connection) {
       if (err) {
-        logger.error("Error getting connection from dbConnection");
+        logger.error("Error connecting to the database");
         res.status(500).json({
           error: err.toString(),
           datetime: new Date().toISOString(),
         });
       }
       if (connection) {
-        // 1. Kijk of deze useraccount bestaat.
         connection.query(
-          "SELECT `id`, `emailAdress`, `password`, `firstName`, `lastName` FROM `user` WHERE `emailAdress` = ?",
+          `SELECT id, firstName, lastName, emailAdress, password FROM user WHERE emailAdress = '${emailAdress}'`,
           [req.body.emailAdress],
-          (err, rows, fields) => {
+          function (error, result, fields) {
             connection.release();
-            if (err) {
-              logger.error("Error: ", err.toString());
-              res.status(500).json({
-                error: err.toString(),
-                datetime: new Date().toISOString(),
+            if (result.length === 0) {
+              logger.warn("Email not found");
+              res.status(404).json({
+                status: 404,
+                result: "Email not found",
               });
-            }
-            if (rows) {
-              // 2. Er was een resultaat, check het password.
-              if (
-                rows &&
-                rows.length === 1 &&
-                rows[0].password == req.body.password
-              ) {
-                logger.info(
-                  "passwords DID match, sending userinfo and valid token"
-                );
-                // Extract the password from the userdata - we do not send that in the response.
-                const { password, ...userinfo } = rows[0];
-                // Create an object containing the data we want in the payload.
-                const payload = {
-                  userId: userinfo.id,
-                };
+            } else {
+              validPassword = bcrypt.compareSync(
+                req.body.password,
+                result[0].password
+              );
+              if (error) {
+                res.status(500).json({
+                  status: 500,
+                  result: "Internal server error",
+                });
+              }
 
-                jwt.sign(
-                  payload,
-                  jwtSecretKey,
-                  { expiresIn: "12d" },
-                  function (err, token) {
-                    logger.debug("User logged in, sending: ", userinfo);
-                    logger.debug("jwtSecretKey: ", token);
-                    res.status(200).json({
-                      status: 200,
-                      result: { ...userinfo, token },
-                    });
-                  }
-                );
+              if (validPassword) {
+                if (result) {
+                  const { password, ...user } = result[0];
+                  jwt.sign(
+                    { userId: user.id },
+                    jwtSecretKey,
+                    { expiresIn: "12d" },
+                    function (err, token) {
+                      if (err) next(err);
+                      if (token) {
+                        console.log("token: ", token);
+                        res.status(201).json({
+                          status: 201,
+                          result: { ...user, token },
+                        });
+                      }
+                    }
+                  );
+                } else {
+                  res.status(404).json({
+                    status: 404,
+                    result: "User does not exist",
+                  });
+                }
               } else {
-                logger.info("User not found or password invalid");
                 res.status(401).json({
-                  message: "User not found or password invalid",
-                  datetime: new Date().toISOString(),
+                  status: 401,
+                  result: "Password is incorrect",
                 });
               }
             }
@@ -75,27 +121,15 @@ module.exports = {
 
   validateLogin(req, res, next) {
     // Verify that we receive the expected input
+    let login = req.body;
+    let { emailAdress, password } = login;
     try {
+      assert(emailIsValid(emailAdress), "Email is invalid");
       assert(
-        typeof req.body.password === "string",
-        "password must be a string."
+        passwordIsValid(password),
+        "Password is invalid, min. 8 characters, 1 uppercase, 1 lowercase, 1 number"
       );
-      assert(
-        typeof req.body.emailAdress === "string",
-        "email must be a string."
-      );
-      assert(typeof emailAdress === "string", "email cannot be null");
-      assert(typeof password === "string", "password cannot be null");
-      assert.match(
-        req.body.password,
-        /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])[0-9a-zA-Z]{8,}$/,
-        "Password must contain 8-15 characters which contains at least one lower- and uppercase letter, one special character and one digit"
-      );
-      assert.match(
-        req.body.emailAdress,
-        /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
-        "Non valid email-address"
-      );
+
       next();
     } catch (error) {
       const err = {

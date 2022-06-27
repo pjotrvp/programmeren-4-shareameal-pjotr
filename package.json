@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "start": "nodemon index.js",
-    "test": "mocha test/**/*.test.js --exit"
+    "test": "mocha test/**/*.test.js --exit",
+    "dev": "nodemon index.js"
   },
   "author": "Pjotr",
   "license": "ISC",
@@ -15,6 +16,7 @@
     "nodemon": "^2.0.15"
   },
   "dependencies": {
+    "bcrypt": "^5.0.1",
     "body-parser": "^1.20.0",
     "chai-http": "^4.3.0",
     "dotenv": "^16.0.1",
