@@ -45,7 +45,25 @@ describe("UC-101: Login functionality different test cases, /auth/login", () => 
     );
   });
 
-  describe("TC-101-1: required field missing", () => {});
+  describe("TC-101-1: required field missing", () => {
+    it("When a required field is missing, a valid error should be returned", (done) => {
+      chai
+        .request(server)
+        .post("/auth/login")
+        .send({
+          emailAdress: "",
+          password: "Mooi1234",
+        })
+        .end((err, res) => {
+          assert.ifError(err);
+          res.should.be.a("object");
+          let { status, result } = res.body;
+          status.should.be.eql(400);
+          result.should.be.eql("email cannot be null");
+          done();
+        });
+    });
+  });
 
   describe("TC-101-2: invalid e-mail adress", () => {});
 
