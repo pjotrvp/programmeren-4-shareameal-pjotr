@@ -17,7 +17,11 @@ router.post(
   userController.addUser
 );
 
-router.get("/users/profile", userController.getUserProfileFromId);
+router.get(
+  "/users/profile",
+  authController.validateToken,
+  userController.getUserProfileFromId
+);
 
 router.get("/users", authController.validateToken, userController.getAllUser);
 
@@ -27,8 +31,14 @@ router.get(
   userController.getUserById
 );
 
-router.put("/users/:userId", userController.putUser);
+router.put(
+  "/users/:userId",
+  authController.validateToken, userController.putUser
+);
 
-router.delete("/users/:userId", userController.deleteUser);
+router.delete(
+  "/users/:userId",
+  authController.validateToken, userController.deleteUser
+);
 
 module.exports = router;

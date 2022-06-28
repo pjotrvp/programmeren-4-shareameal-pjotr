@@ -1,6 +1,6 @@
 const express = require("express");
 const app = express();
-
+const dbConnection = require("./database/dbConnection");
 const authRoutes = require("./src/routes/authentication.routes");
 const logger = require("./config/config").logger;
 

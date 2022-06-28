@@ -1,4 +1,6 @@
 const assert = require("assert");
+const jwt = require("jsonwebtoken");
+const jwtSecretKey = require("../../config/config").jwtSecretKey;
 const logger = require("../../config/config").logger;
 const dbConnection = require("../../database/dbConnection");
 const bcrypt = require("bcrypt");
@@ -135,34 +137,31 @@ let controller = {
   },
 
   getUserProfileFromId: (req, res, next) => {
-    const userId = req.userId;
-    dbConnection.getConnection(function (error, connection) {
-      if (error) throw error;
+    let authId = req.userId;
+    dbConnection.getConnection(function (err, connection) {
+      if (err) {
+        throw err;
+      }
       connection.query(
-        "SELECT * FROM user WHERE id = ?",
-        [userId],
-        function (error, result, fields) {
+        `SELECT * FROM user WHERE id = ${authId}`,
+        function (err, result, fields) {
           connection.release();
-          if (error) throw error;
-
-          logger.debug("result = ", result.length);
-          if (result.length < 1) {
-            const error = {
-              status: 404,
-              message: `User with id: ${userId} not found!`,
-            };
-            next(error);
-            return;
+          if (err) {
+            res.status(401).json({
+              status: 401,
+              result: err.message,
+            });
+          } else {
+            res.status(200).json({
+              status: 200,
+              result: result,
+            });
           }
-          res.status(200).json({
-            status: 200,
-            result: result[0],
-          });
         }
       );
     });
   },
-  getUserById: (req, res) => {
+  getUserById: (req, res, next) => {
     const userId = req.params.userId;
     dbConnection.getConnection(function (err, connection) {
       if (err) throw error;
@@ -230,78 +229,87 @@ let controller = {
     });
   },
   putUser: (req, res) => {
+    let user = req.body;
+    user.password = bcrypt.hashSync(user.password, salt);
     const userId = req.params.userId;
-    const updateUser = req.body;
-    logger.debug(`User with ID ${userId} requested to be updated`);
     dbConnection.getConnection(function (err, connection) {
       if (err) throw err;
-      connection.query(
-        "UPDATE user SET firstName=?, lastName=?, isActive=?, emailAdress=?, password=?, phoneNumber=?, street=?, city=? WHERE id = ?;",
-        [
-          updateUser.firstName,
-          updateUser.lastName,
-          updateUser.isActive,
-          updateUser.emailAdress,
-          updateUser.password,
-          updateUser.phoneNumber,
-          updateUser.street,
-          updateUser.city,
-          userId,
-        ],
-        function (error, result, fields) {
-          if (error) {
-            res.status(401).json({
-              status: 401,
-              message: `Email ${user.emailAdress} has already been taken!`,
-            });
-            return;
+      if (
+        emailIsValid(user.emailAdress) &&
+        phoneNumberIsValid(user.phoneNumber)
+      ) {
+        connection.query(
+          `UPDATE user SET ? WHERE id = ${userId}`,
+          user,
+          function (err, results, fields) {
+            connection.release();
+            if (err) next(err);
+            if (results.affectedRows == 0) {
+              res.status(404).json({
+                status: 404,
+                result: "User does not exist",
+              });
+            } else {
+              res.status(200).json({
+                status: 200,
+                result: user,
+              });
+            }
           }
-          if (result.affectedRows > 0) {
-            connection.query(
-              "SELECT * FROM user WHERE id = ?;",
-              [userId],
-              function (error, result, fields) {
-                res.status(200).json({
-                  status: 200,
-                  result: result[0],
-                });
-              }
-            );
-          } else {
-            res.status(400).json({
-              status: 400,
-              message: `Update failed, user with ID ${userId} does not exist`,
-            });
-          }
-        }
-      );
-      connection.release();
+        );
+      } else if (!emailIsValid(user.emailAdress)) {
+        res.status(400).json({
+          status: 400,
+          result: "Email is invalid",
+        });
+      } else if (!phoneNumberIsValid(user.phoneNumber)) {
+        res.status(400).json({
+          status: 400,
+          result: "Phone number is invalid",
+        });
+      }
     });
   },
   deleteUser: (req, res) => {
-    const userId = req.params.userId;
-    dbConnection.getConnection(function (err, connection) {
-      if (err) throw error;
-      connection.query(
-        "DELETE IGNORE FROM user WHERE Id = " + userId,
-        function (error, result, fields) {
-          connection.release();
-          if (error) throw error;
-          logger.debug("result = ", result.length);
-          if (result.affectedRows > 0) {
-            res.status(200).json({
-              status: 200,
-              message: `User with ID ${userId} deleted successfuly!`,
-            });
-          } else {
-            res.status(400).json({
-              status: 400,
-              message: `User does not exist`,
-            });
-          }
+const userId = req.params.userId;
+
+dbConnection.getConnection(function (err, connection) {
+  if (err) throw err;
+  connection.query(
+    `SELECT * FROM user WHERE id = ${userId}`,
+    function (err, result, fields) {
+      if (err) next(err);
+      if (result.length > 0) {
+        if (req.userId == userId) {
+          connection.query(
+            `DELETE FROM user WHERE ${userId} = user.id`,
+            function (err, result, fields) {
+              connection.release();
+              if (err) next(err);
+              if (result.affectedRows > 0) {
+                res.status(200).json({
+                  status: 200,
+                  result: "User deleted",
+                });
+              }
+            }
+          );
+        } else {
+          res.status(403).json({
+            status: 403,
+            result: "You are not the owner of this user",
+          });
         }
-      );
-    });
+      } else {
+        res.status(404).json({
+          status: 404,
+          result: "User does not exist",
+        });
+      }
+    }
+  );
+});
+
   },
 };
 
