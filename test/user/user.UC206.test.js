@@ -98,7 +98,7 @@ describe("UC-206: Delete user, User controller /api/users/userId", () => {
     });
 
     describe("TC-206-4: user succesfully deleted", () => {
-        it("When a user is successfully deleted, a valid response should be returned", (done) => {
+        xit("When a user is successfully deleted, a valid response should be returned", (done) => {
             chai
                 .request(server)
                 .delete("/api/users/1")

@@ -109,9 +109,10 @@ let controller = {
     });
   },
   getAllMeals: (req, res, next) => {
+    let dbQuery = "SELECT * FROM meal";
     dbConnection.getConnection(function (error, connection) {
       if (error) throw error;
-      connection.query("SELECT * FROM meal", function (error, result, fields) {
+      connection.query(dbQuery, function (error, result, fields) {
         connection.release();
         if (error) throw error;
         logger.debug("result= ", result.length);
