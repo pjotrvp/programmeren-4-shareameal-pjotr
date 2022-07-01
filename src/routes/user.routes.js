@@ -12,7 +12,7 @@ router.get("/", (req, res) => {
 
 router.post(
   "/users",
-  //authController.validateToken,
+  authController.validateToken,
   userController.validateUser,
   userController.addUser
 );
