@@ -6,6 +6,7 @@ const logger = require("../../config/config").logger;
 const jwtSecretKey = require("../../config/config").jwtSecretKey;
 const bcrypt = require("bcrypt");
 
+
 const FORBIDDEN_TERMINAL_CHARACTERS = [
   `!`,
   `#`,
@@ -45,6 +46,8 @@ let passwordIsValid = (password) => {
   }
   return true;
 };
+
+
 
 module.exports = {
   login: (req, res, next) => {
@@ -141,20 +144,25 @@ module.exports = {
   },
 
   validateOwnership(req, res, next) {
-    const userId = req.userId;
+    let userId = req.userId;
+    logger.debug("userIdtestBefore: ", userId);
     const mealId = req.params.mealId;
     dbConnection.getConnection(function (err, connection) {
       if (err) throw err;
       connection.query(
         "SELECT * FROM meal WHERE id = ?;",
         [mealId],
-        function (error, results, fields) {
-          if (error) throw error;
+        function (error, result, fields) {
           connection.release();
-          if (results[0]) {
-            const cookId = results[0].cookId;
-            if (userId !== cookId) {
-              res.status(403).json({
+          if (error) throw error;
+           logger.debug("results: ", result.length);
+           logger.debug("resultDetails:", result[0]);
+           logger.debug("userIdtest:" , userId);
+          if (result.length === 0) {
+            next();
+          } else {
+            if (userId !== result[0].cookId) {
+              return res.status(403).json({
                 status: 403,
                 message:
                   "User is not the owner of the meal that is being requested to be deleted or updated",
@@ -162,16 +170,15 @@ module.exports = {
             } else {
               next();
             }
-          } else {
-            next();
-          }
+          } 
         }
       );
     });
   },
 
   validateOwnershipUser(req, res, next) {
-    const userId = req.userId;
+    let userId = req.userId;
+    logger.debug("userIdtestOwnershipUser: ", userId);
     const deletingUserId = req.params.userId;
 
     dbConnection.getConnection(function (error, connection) {
@@ -227,6 +234,7 @@ module.exports = {
         if (payload) {
           logger.debug("token is valid", payload);
           req.userId = payload.userId;
+          logger.debug("userIdvalidateToken: ", req.userId);
           next();
         }
       });

@@ -130,7 +130,7 @@ describe("UC-301, Create meal, Meal Controller /api/meal", () => {
                 name: "Spaghetti Bolognese",
                 description: "Dé pastaklassieker bij uitstek.",
               })
-              .end((err, res) => {
+              .end((err, res) => { 
                 assert.ifError(err)
                 res.should.be.a("object");
                 let { status, result } = res.body;

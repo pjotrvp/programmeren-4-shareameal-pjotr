@@ -98,17 +98,17 @@ describe("UC-206: Delete user, User controller /api/users/userId", () => {
     });
 
     describe("TC-206-4: user succesfully deleted", () => {
-        xit("When a user is successfully deleted, a valid response should be returned", (done) => {
+        it("When a user is successfully deleted, a valid response should be returned", (done) => {
             chai
                 .request(server)
                 .delete("/api/users/1")
-                .set("Authorization", "Bearer " + jwt.sign({ id: 1 }, jwtSecretKey))
+                .set("Authorization", "Bearer " + jwt.sign({ userId: 1 }, jwtSecretKey))
                 .end((err, res) => {
                     assert.ifError(err);
                     res.should.be.a("object");
-                    let { status, message } = res.body;
+                    let { status, result } = res.body;
                     status.should.be.eql(200);
-                    message.should.be.eql("User successfully deleted");
+                    result.should.be.eql("User deleted");
                     done();
                 }
             );

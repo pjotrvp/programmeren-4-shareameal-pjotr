@@ -138,6 +138,7 @@ let controller = {
 
   getUserProfileFromId: (req, res, next) => {
     let authId = req.userId;
+    console.log("authIdGetProfile: ", authId);
     dbConnection.getConnection(function (err, connection) {
       if (err) {
         throw err;

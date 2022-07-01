@@ -67,7 +67,7 @@ let controller = {
       if (err) throw err;
 
       connection.query(
-        `INSERT INTO meal (name, description, price, dateTime, imageUrl, isToTakeHome, isVegan, isVega, isActive, maxAmountOfParticipants, cookId) VALUES ('${meal.name}', '${meal.description}', '${meal.price}', '${meal.dateTime}', '${meal.imageUrl}', '${meal.isToTakeHome}', '${meal.isVegan}', '${meal.isVega}', '${meal.isActive}', '${meal.maxAmountOfParticipants}','${cookId}')`,
+        `INSERT INTO meal (name, description, price, dateTime, imageUrl, isToTakeHome, isVegan, isVega, isActive, maxAmountOfParticipants, cookId) VALUES ('${meal.name}', '${meal.description}', ${meal.price}, '${meal.dateTime}', '${meal.imageUrl}', ${meal.isToTakeHome}, ${meal.isVegan}, ${meal.isVega}, ${meal.isActive}, ${meal.maxAmountOfParticipants},${cookId});`,
         [
           meal.dateTime,
           meal.maxAmountOfParticipants,
@@ -230,8 +230,7 @@ let controller = {
 
   deleteMealById: (req, res, next) => {
     const mealId = req.params.mealId;
-    const userId = req.userId;
-
+    
     dbConnection.getConnection(function (error, connection) {
       // Get Meal before deleting
       connection.query(
@@ -246,19 +245,30 @@ let controller = {
             logger.debug("Deleting meal was not found!");
             return;
           }
-
-          // Delete meal
-          connection.query(
-            "DELETE IGNORE FROM meal WHERE id = " + mealId,
-            function (error, result, fields) {
-              logger.debug("Meal deleted succesfully!");
-              connection.release;
-              res.status(200).json({
-                status: 200,
-                message: "Meal deleted successfully",
-              });
-            }
-          );
+          // Check if user is owner of meal
+          logger.debug("cookId meal: " + meal[0].cookId);
+          logger.debug("userId meal: " + req.userId);
+          if (meal[0].cookId == req.userId) {
+            // Delete meal
+            connection.query(
+              `DELETE IGNORE FROM meal WHERE id = ${mealId};`,
+              function (error, result, fields) {
+                logger.debug("Meal deleted succesfully!");
+                connection.release;
+                res.status(200).json({
+                  status: 200,
+                  message: "Meal deleted successfully",
+                });
+              }
+            );
+          } else {
+            const error = {
+              status: 403,
+              message:
+                "User is not the owner of the meal that is being requested to be deleted or updated",
+            };
+            next(error);
+          }
         }
       );
     });
