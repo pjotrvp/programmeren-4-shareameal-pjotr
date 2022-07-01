@@ -19,10 +19,14 @@ router.post(
 );
 
 // UC-302
-router.get("/meal", mealController.getAllMeals);
+router.get("/meal", authController.validateToken, mealController.getAllMeals);
 
 // UC-303
-router.get("/meal/:mealId", mealController.getMealById);
+router.get(
+  "/meal/:mealId",
+  authController.validateToken,
+  mealController.getMealById
+);
 
 // UC-304
 router.put(
