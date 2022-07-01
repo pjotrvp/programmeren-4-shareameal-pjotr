@@ -37,7 +37,6 @@ router.put(
 router.delete(
   "/meal/:mealId",
   authController.validateToken,
-  authController.validateOwnership,
   mealController.deleteMealById
 );
 
