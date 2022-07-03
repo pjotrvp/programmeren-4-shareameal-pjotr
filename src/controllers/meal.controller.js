@@ -162,12 +162,11 @@ let controller = {
     const mealId = req.params.mealId;
     const newMealInfo = req.body;
     let price = parseFloat(newMealInfo.price);
-    let updateAllergenes = req.body.allergenes.join();
 
     dbConnection.getConnection(function (err, connection) {
       if (err) throw err;
       connection.query(
-        `UPDATE meal SET name = ?, description = ?, isActive = ?, isVega = ?, isVegan = ?, isToTakeHome = ?, dateTime = STR_TO_DATE(?,'%Y-%m-%dT%H:%i:%s.%fZ'), imageUrl = ?, allergenes = ?, maxAmountOfParticipants = ?, price = ? WHERE id = ?;`,
+        `UPDATE meal SET name = ?, description = ?, isActive = ?, isVega = ?, isVegan = ?, isToTakeHome = ?, dateTime = STR_TO_DATE(?,'%Y-%m-%dT%H:%i:%s.%fZ'), imageUrl = ?,  maxAmountOfParticipants = ?, price = ? WHERE id = ?;`,
         [
           newMealInfo.name,
           newMealInfo.description,
@@ -177,7 +176,6 @@ let controller = {
           newMealInfo.isToTakeHome,
           newMealInfo.dateTime,
           newMealInfo.imageUrl,
-          updateAllergenes,
           newMealInfo.maxAmountOfParticipants,
           price,
           mealId,
