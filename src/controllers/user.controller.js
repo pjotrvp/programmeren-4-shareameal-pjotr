@@ -229,7 +229,7 @@ let controller = {
       });
     });
   },
-  putUser: (req, res) => {
+  putUser: (req, res, next) => {
     let user = req.body;
     user.password = bcrypt.hashSync(user.password, salt);
     const userId = req.params.userId;
@@ -242,7 +242,7 @@ let controller = {
         connection.query(
           `UPDATE user SET ? WHERE id = ${userId}`,
           user,
-          function (err, results, fields, next) {
+          function (err, results, fields) {
             connection.release();
             if (err) next(err);
             if (results.affectedRows == 0) {
