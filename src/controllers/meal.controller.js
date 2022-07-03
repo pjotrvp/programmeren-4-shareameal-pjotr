@@ -183,6 +183,7 @@ let controller = {
         function (error, results, fields) {
           if (error) {
             connection.release();
+            console.log(error)
             const newError = {
               status: 404,
               message: `Meal with ID ${mealId} not found`,
