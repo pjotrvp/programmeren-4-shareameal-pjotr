@@ -67,7 +67,7 @@ describe("UC-305, Delete meal, Meal Controller /api/meal", () => {
       chai
         .request(server)
         .delete("/api/meal/2")
-        .set("Authorization", "Bearer " + jwt.sign({ id: 1 }, jwtSecretKey))
+        .set("Authorization", "Bearer " + jwt.sign({ userId: 1 }, jwtSecretKey))
         .end((err, res) => {
           assert.ifError(err);
           res.should.be.a("object");
@@ -86,7 +86,7 @@ describe("UC-305, Delete meal, Meal Controller /api/meal", () => {
       chai
         .request(server)
         .delete("/api/meal/3")
-        .set("Authorization", "Bearer " + jwt.sign({ id: 1 }, jwtSecretKey))
+        .set("Authorization", "Bearer " + jwt.sign({ userId: 1 }, jwtSecretKey))
         .end((err, res) => {
           assert.ifError(err);
           res.should.be.a("object");

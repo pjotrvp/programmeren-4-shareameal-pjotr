@@ -18,7 +18,7 @@ router.post(
   mealController.registerMeal
 );
 
-// UC-302
+// UC-304
 router.get("/meal", authController.validateToken, mealController.getAllMeals);
 
 // UC-303
@@ -28,12 +28,11 @@ router.get(
   mealController.getMealById
 );
 
-// UC-304
+// UC-302
 router.put(
   "/meal/:mealId",
+  mealController.validateMeal,
   authController.validateToken,
-  authController.validateOwnership,
-  mealController.validateMealUpdate,
   mealController.updateMealById
 );
 

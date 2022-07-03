@@ -37,27 +37,6 @@ let controller = {
     }
   },
 
-  validateMealUpdate: (req, res, next) => {
-    let meal = req.body;
-    let { name, maxAmountOfParticipants, price } = meal;
-
-    try {
-      assert(typeof name === "string", "Name should be a string");
-      assert(
-        typeof maxAmountOfParticipants === "number",
-        "maxAmountofParticipants should be a number"
-      );
-      assert(typeof price === "number", "Price should be a number");
-      next();
-    } catch (error) {
-      const err = {
-        status: 400,
-        message: error.message,
-      };
-      next(err);
-    }
-  },
-
   registerMeal: (req, res, next) => {
     let meal = req.body;
     let cookId = req.userId;
@@ -159,68 +138,40 @@ let controller = {
   },
 
   updateMealById: (req, res, next) => {
-    const mealId = req.params.mealId;
-    const newMealInfo = req.body;
-    let price = parseFloat(newMealInfo.price);
-
+    let mealId = req.params.mealId;
+    let meal = req.body;
+    let cookId = req.userId;
     dbConnection.getConnection(function (err, connection) {
       if (err) throw err;
       connection.query(
-        `UPDATE meal SET name = ?, description = ?, isActive = ?, isVega = ?, isVegan = ?, isToTakeHome = ?, dateTime = STR_TO_DATE(?,'%Y-%m-%dT%H:%i:%s.%fZ'), imageUrl = ?,  maxAmountOfParticipants = ?, price = ? WHERE id = ?;`,
-        [
-          newMealInfo.name,
-          newMealInfo.description,
-          newMealInfo.isActive,
-          newMealInfo.isVega,
-          newMealInfo.isVegan,
-          newMealInfo.isToTakeHome,
-          newMealInfo.dateTime,
-          newMealInfo.imageUrl,
-          newMealInfo.maxAmountOfParticipants,
-          price,
-          mealId,
-        ],
-        function (error, results, fields) {
-          if (error) {
-            connection.release();
-            console.log(error)
-            const newError = {
-              status: 404,
-              message: `Meal with ID ${mealId} not found`,
-            };
-            next(newError);
-          } else {
-            if (results.affectedRows > 0) {
-              if (err) throw err;
+        `SELECT * FROM meal WHERE id = ${mealId}`,
+        function (err, result, fields) {
+          if (err) next(err);
+          if (result.length > 0) {
+            if (result[0].cookId == cookId) {
               connection.query(
-                "SELECT * FROM meal WHERE id = ?;",
-                [mealId],
-                function (error, results, fields) {
+                `UPDATE meal SET ? WHERE id = ${mealId}`,
+                meal,
+                function (err, result, fields) {
                   connection.release();
-                  if (error) throw error;
-
-                  results[0].price = price;
-
-                  results[0].isActive = newMealInfo.isActive ? true : false;
-                  results[0].isVega = newMealInfo.isVega ? true : false;
-                  results[0].isVegan = newMealInfo.isVegan ? true : false;
-                  results[0].isToTakeHome = newMealInfo.isToTakeHome
-                    ? true
-                    : false;
-
+                  if (err) next(err);
                   res.status(200).json({
                     status: 200,
-                    result: results[0],
+                    result: meal,
                   });
                 }
               );
             } else {
-              const error = {
-                status: 404,
-                message: `Meal with ID ${mealId} not found`,
-              };
-              next(error);
+              res.status(403).json({
+                status: 403,
+                result: "You are not the owner of this meal",
+              });
             }
+          } else {
+            res.status(404).json({
+              status: 404,
+              result: "Meal does not exist",
+            });
           }
         }
       );
@@ -229,7 +180,7 @@ let controller = {
 
   deleteMealById: (req, res, next) => {
     const mealId = req.params.mealId;
-    
+
     dbConnection.getConnection(function (error, connection) {
       // Get Meal before deleting
       connection.query(
@@ -245,8 +196,6 @@ let controller = {
             return;
           }
           // Check if user is owner of meal
-          logger.debug("cookId meal: " + meal[0].cookId);
-          logger.debug("userId meal: " + req.userId);
           if (meal[0].cookId == req.userId) {
             // Delete meal
             connection.query(
