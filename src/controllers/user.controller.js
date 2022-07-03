@@ -242,7 +242,7 @@ let controller = {
         connection.query(
           `UPDATE user SET ? WHERE id = ${userId}`,
           user,
-          function (err, results, fields) {
+          function (err, results, fields, next) {
             connection.release();
             if (err) next(err);
             if (results.affectedRows == 0) {
