@@ -47,7 +47,7 @@ describe("UC-202: View all users, User controller /api/users", () => {
         it("When there are no users, an empty list should be returned", (done) => {
             dbConnection.query(
                 CLEAR_USER_TABLE,
-            
+            )
             chai.request(server)
                 .get("/api/users")
                 .set("Authorization", "Bearer " + jwt.sign({ userId: 1 }, jwtSecretKey))
@@ -61,7 +61,7 @@ describe("UC-202: View all users, User controller /api/users", () => {
                     done();
                 })
                 
-            );
+            
         })
     });
 
